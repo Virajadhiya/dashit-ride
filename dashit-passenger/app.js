@@ -95,10 +95,24 @@ function initLeafletMap() {
     attributionControl: false
   }).setView([defaultLat, defaultLng], 14);
 
-  // Modern Clean CartoDB Voyager Tiles
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19
+  // Modern Clean CartoDB Voyager Tiles with OSM Fallback
+  const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    subdomains: 'abcd'
   }).addTo(map);
+
+  tileLayer.on('tileerror', function(error) {
+    console.warn('Carto tile error, falling back to OSM:', error);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+  });
+
+  // Ensure map tiles calculate correct container dimensions on deployment
+  setTimeout(() => { if (map) map.invalidateSize(); }, 150);
+  setTimeout(() => { if (map) map.invalidateSize(); }, 500);
+  setTimeout(() => { if (map) map.invalidateSize(); }, 1200);
+  window.addEventListener('resize', () => { if (map) map.invalidateSize(); });
 
   // Add User Marker
   const userIcon = L.divIcon({

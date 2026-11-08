@@ -96,11 +96,25 @@ function initCaptainMap() {
     attributionControl: false
   }).setView([lat, lng], 14);
 
-  // Modern CartoDB Voyager tiles (with CSS dark tone filter)
+  // Modern CartoDB Voyager tiles (with CSS dark tone filter) & OSM fallback
   const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     maxZoom: 19,
+    subdomains: 'abcd',
     className: 'dark-map-tiles'
   }).addTo(captainMap);
+
+  tileLayer.on('tileerror', function() {
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      className: 'dark-map-tiles'
+    }).addTo(captainMap);
+  });
+
+  // Ensure map tiles calculate correct container dimensions on deployment
+  setTimeout(() => { if (captainMap) captainMap.invalidateSize(); }, 150);
+  setTimeout(() => { if (captainMap) captainMap.invalidateSize(); }, 500);
+  setTimeout(() => { if (captainMap) captainMap.invalidateSize(); }, 1200);
+  window.addEventListener('resize', () => { if (captainMap) captainMap.invalidateSize(); });
 
   // Captain Marker
   const captainIcon = L.divIcon({
