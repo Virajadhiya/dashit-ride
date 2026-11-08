@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DashIt Private Limited - Next-Gen Mobility Ecosystem</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dashGreen: '#76D600',
+            dashGreenDark: '#5EB000',
+            dashNavy: '#0A192F',
+            dashDark: '#030A16',
+            dashBlue: '#0047AB',
+            dashCyan: '#00C0FF',
+            dashCard: '#0E1F38',
+            dashBorder: '#1E3252'
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Outfit"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      background-color: #030A16;
+      color: #F8FAFC;
+      overflow-x: hidden;
+    }
+    .gradient-glow {
+      background: radial-gradient(circle at 50% 20%, rgba(118, 214, 0, 0.15) 0%, rgba(0, 71, 171, 0.12) 40%, transparent 70%);
+    }
+    .app-phone-mockup {
+      border: 8px solid #1E293B;
+      border-radius: 40px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px rgba(118, 214, 0, 0.15);
+      overflow: hidden;
+      background: #000;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #1E3252;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="gradient-glow min-h-screen">
+
+  <!-- Navigation Bar -->
+  <header class="border-b border-dashBorder/80 bg-dashDark/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <img src="./assets/logo.jpg" alt="DashIt Private Limited" class="h-10 sm:h-12 object-contain bg-white px-2 py-1 rounded-xl shadow-sm">
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="flex items-center gap-3">
+        <a href="#apk-guide" class="text-xs font-bold text-slate-300 hover:text-dashGreen hidden sm:flex items-center gap-1.5 transition-colors">
+          <i data-lucide="smartphone" class="w-4 h-4 text-dashGreen"></i>
+          <span>APK Build Guide</span>
+        </a>
+        <a href="./dashit-passenger/index.html" target="_blank" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all flex items-center gap-1.5">
+          <span>Passenger App</span>
+          <i data-lucide="external-link" class="w-3.5 h-3.5 text-dashGreen"></i>
+        </a>
+        <a href="./dashit-captain/index.html" target="_blank" class="px-3.5 py-2 rounded-xl bg-dashGreen hover:bg-white text-dashNavy text-xs font-black transition-all flex items-center gap-1.5 shadow-lg">
+          <span>Captain App</span>
+          <i data-lucide="external-link" class="w-3.5 h-3.5 text-dashNavy"></i>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16 text-center">
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-dashGreen/15 border border-dashGreen/30 text-dashGreen text-xs font-bold uppercase tracking-wider mb-6">
+      <span class="w-2 h-2 rounded-full bg-dashGreen animate-pulse"></span>
+      Client Demo & Presentation Showcase
+    </div>
+
+    <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight max-w-4xl mx-auto leading-tight">
+      Next-Gen On-Demand Mobility by <br class="hidden sm:inline">
+      <span class="bg-gradient-to-r from-dashGreen via-emerald-400 to-dashCyan bg-clip-text text-transparent">
+        DashIt Private Limited
+      </span>
+    </h1>
+
+    <p class="mt-5 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto font-medium">
+      Two standalone, ultra-polished web applications ready for client demonstration: a frictionless ride booking experience for Passengers, and a high-yield driving cockpit for Captains.
+    </p>
+
+    <!-- App Switcher Cards -->
+    <div class="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto text-left">
+
+      <!-- Passenger App Card -->
+      <div class="bg-dashCard border-2 border-dashBorder hover:border-dashGreen rounded-3xl p-6 sm:p-8 transition-all hover:shadow-2xl hover:shadow-dashGreen/10 group relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-dashGreen/10 rounded-full blur-2xl group-hover:bg-dashGreen/20 transition-all"></div>
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-14 h-14 rounded-2xl bg-white p-2 flex items-center justify-center shadow-md">
+            <img src="./dashit-passenger/icon-192.png" alt="Passenger App Icon" class="w-full h-full object-contain">
+          </div>
+          <span class="px-3 py-1 bg-dashGreen/20 text-dashGreen text-[11px] font-black rounded-full uppercase">For Commuters</span>
+        </div>
+
+        <h3 class="text-xl font-black text-white group-hover:text-dashGreen transition-colors">DashIt Passenger App</h3>
+        <p class="text-sm text-slate-300 mt-2 font-normal">
+          Affordable, fast bike taxis, autos, cabs, and parcel deliveries with transparent fares, live tracking, and OTP verification.
+        </p>
+
+        <div class="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-300">
+          <span class="bg-slate-900/80 px-2.5 py-1 rounded-lg border border-dashBorder">⚡ 1-Tap Bike Taxi</span>
+          <span class="bg-slate-900/80 px-2.5 py-1 rounded-lg border border-dashBorder">📍 Live GPS Tracking</span>
+          <span class="bg-slate-900/80 px-2.5 py-1 rounded-lg border border-dashBorder">💳 DashIt Wallet</span>
+          <span class="bg-slate-900/80 px-2.5 py-1 rounded-lg border border-dashBorder">🛡️ 24/7 Safety SOS</span>
+        </div>
+
+        <div class="mt-6 flex items-center gap-3">
+          <a href="./dashit-passenger/index.html" class="flex-1 py-3 bg-dashGreen text-dashNavy text-xs font-black rounded-xl text-center shadow-lg hover:bg-white transition-all flex items-center justify-center gap-1.5">
+            <span>Launch Passenger App</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+          <button onclick="scrollToSimulator('passenger')" class="p-3 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold" title="Preview Below">
+            <i data-lucide="eye" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Captain Partner App Card -->
+      <div class="bg-dashCard border-2 border-dashBorder hover:border-dashAmber rounded-3xl p-6 sm:p-8 transition-all hover:shadow-2xl hover:shadow-dashAmber/10 group relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-dashAmber/10 rounded-full blur-2xl group-hover:bg-dashAmber/20 transition-all"></div>
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-14 h-14 rounded-2xl bg-dashNavy p-2 flex items-center justify-center shadow-md border border-dashGreen">
+            <img src="./dashit-captain/icon-192.png" alt="Captain App Icon" class="w-full h-full object-contain">
+          </div>
+          <span class="px-3 py-1 bg-dashAmber/20 text-dashAmber text-[11px] font-black rounded-full uppercase">For Drivers & Captains</span>
+        </div>
+
+        <h3 class="text-xl font-black text-white group-hover:text-dashAmber transition-colors">DashIt Captain App</h3>
+        <p class="text-sm text-slate-300 mt-2 font-normal">
+          Dual-engine platform: instant driver KYC registration and live driving cockpit with incoming ride pings, audio alerts, and daily UPI payouts.
+        </p>
+
+        <div class="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-300">
+          <span class="bg-slate-900/80 px-2.5 py-1 rounded-lg border border-dashBorder">📝 AI Driver KYC</span>
+          <span class="bg-slate-900/80 px-2.5 py-1 rounded-lg border border-dashBorder">🔔 Urgent Ride Ping</span>
+          <span class="bg-slate-900/80 px-2.5 py-1 rounded-lg border border-dashBorder">💸 Instant UPI Payout</span>
+          <span class="bg-slate-900/80 px-2.5 py-1 rounded-lg border border-dashBorder">🔥 1.4x Surge Heatmaps</span>
+        </div>
+
+        <div class="mt-6 flex items-center gap-3">
+          <a href="./dashit-captain/index.html" class="flex-1 py-3 bg-dashGreen text-dashNavy text-xs font-black rounded-xl text-center shadow-lg hover:bg-white transition-all flex items-center justify-center gap-1.5">
+            <span>Launch Captain App</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+          <button onclick="scrollToSimulator('captain')" class="p-3 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold" title="Preview Below">
+            <i data-lucide="eye" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Live Interactive Dual-Simulator Section -->
+  <section class="border-t border-dashBorder py-16 bg-dashDark" id="live-simulator">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-10">
+        <h2 class="text-2xl sm:text-4xl font-black text-white">Live Interactive Device Simulator</h2>
+        <p class="text-sm text-slate-400 mt-2">Test both apps side-by-side or individually in real time right here.</p>
+        
+        <!-- Controls -->
+        <div class="mt-6 inline-flex p-1 bg-dashCard rounded-2xl border border-dashBorder">
+          <button onclick="setSimView('dual')" id="simBtnDual" class="px-4 py-2 rounded-xl text-xs font-bold bg-dashGreen text-dashNavy">
+            📱📱 Dual Side-by-Side View
+          </button>
+          <button onclick="setSimView('passenger')" id="simBtnPassenger" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white">
+            🏍️ Passenger Only
+          </button>
+          <button onclick="setSimView('captain')" id="simBtnCaptain" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white">
+            🚖 Captain Only
+          </button>
+        </div>
+      </div>
+
+      <!-- Simulator Frames Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center justify-center max-w-6xl mx-auto" id="simulatorGrid">
+
+        <!-- Passenger App Frame -->
+        <div class="flex flex-col items-center" id="framePassengerWrap">
+          <div class="flex items-center justify-between w-full max-w-[420px] mb-3 px-2">
+            <span class="text-xs font-bold text-dashGreen flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-dashGreen"></span>
+              Passenger Mobile App
+            </span>
+            <a href="./dashit-passenger/index.html" target="_blank" class="text-xs text-slate-400 hover:text-white flex items-center gap-1">
+              <span>Open in new tab</span>
+              <i data-lucide="external-link" class="w-3 h-3"></i>
+            </a>
+          </div>
+          <div class="app-phone-mockup w-full max-w-[420px] h-[780px]">
+            <iframe src="./dashit-passenger/index.html" class="w-full h-full border-0" title="Passenger App"></iframe>
+          </div>
+        </div>
+
+        <!-- Captain App Frame -->
+        <div class="flex flex-col items-center" id="frameCaptainWrap">
+          <div class="flex items-center justify-between w-full max-w-[420px] mb-3 px-2">
+            <span class="text-xs font-bold text-dashAmber flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-dashAmber"></span>
+              Captain Partner Mobile App
+            </span>
+            <a href="./dashit-captain/index.html" target="_blank" class="text-xs text-slate-400 hover:text-white flex items-center gap-1">
+              <span>Open in new tab</span>
+              <i data-lucide="external-link" class="w-3 h-3"></i>
+            </a>
+          </div>
+          <div class="app-phone-mockup w-full max-w-[420px] h-[780px]">
+            <iframe src="./dashit-captain/index.html" class="w-full h-full border-0" title="Captain App"></iframe>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- APK Conversion & Mobile Deployment Guide -->
+  <section class="border-t border-dashBorder py-16 bg-dashCard/40" id="apk-guide">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <span class="px-3.5 py-1 rounded-full bg-dashGreen/15 border border-dashGreen/30 text-dashGreen text-xs font-bold uppercase tracking-wider">
+          Turn Into Android APK
+        </span>
+        <h2 class="text-2xl sm:text-4xl font-black text-white mt-3">How to Build Free Android APKs for Clients</h2>
+        <p class="text-sm text-slate-300 mt-2 max-w-xl mx-auto">
+          Both apps are 100% PWA and WebView compliant with complete Web App Manifests, Service Workers, high-resolution icons, and notch-safe viewports.
+        </p>
+      </div>
+
+      <!-- 3 Methods Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Method 1: PWABuilder (Recommended) -->
+        <div class="bg-dashDark border border-dashBorder rounded-2xl p-6">
+          <div class="w-10 h-10 rounded-xl bg-dashGreen/20 text-dashGreen font-bold flex items-center justify-center mb-4 text-base">
+            1
+          </div>
+          <h4 class="text-base font-black text-white">PWABuilder (By Microsoft)</h4>
+          <span class="text-[10px] text-dashGreen font-bold uppercase block mb-2">Free &bull; Official APK / AAB</span>
+          <p class="text-xs text-slate-300 leading-relaxed mb-4">
+            Deploy both folders to Netlify/Vercel/GitHub Pages (or free local tunnel), paste the URL into <strong>pwabuilder.com</strong>, and click <strong>"Generate Android Package (.apk)"</strong>.
+          </p>
+          <a href="https://www.pwabuilder.com" target="_blank" class="text-xs text-dashGreen font-bold hover:underline flex items-center gap-1">
+            Visit PWABuilder.com &rarr;
+          </a>
+        </div>
+
+        <!-- Method 2: WebIntoApp -->
+        <div class="bg-dashDark border border-dashBorder rounded-2xl p-6">
+          <div class="w-10 h-10 rounded-xl bg-dashBlue/20 text-dashBlue font-bold flex items-center justify-center mb-4 text-base">
+            2
+          </div>
+          <h4 class="text-base font-black text-white">WebIntoApp.com</h4>
+          <span class="text-[10px] text-dashCyan font-bold uppercase block mb-2">Instant 2-Minute APK</span>
+          <p class="text-xs text-slate-300 leading-relaxed mb-4">
+            Upload the HTML files or enter the live hosting URL on <strong>webintoapp.com</strong>. It builds a ready-to-install Android APK with splash screen and icon in under 2 minutes.
+          </p>
+          <a href="https://www.webintoapp.com" target="_blank" class="text-xs text-dashCyan font-bold hover:underline flex items-center gap-1">
+            Visit WebIntoApp.com &rarr;
+          </a>
+        </div>
+
+        <!-- Method 3: Capacitor CLI -->
+        <div class="bg-dashDark border border-dashBorder rounded-2xl p-6">
+          <div class="w-10 h-10 rounded-xl bg-dashAmber/20 text-dashAmber font-bold flex items-center justify-center mb-4 text-base">
+            3
+          </div>
+          <h4 class="text-base font-black text-white">Capacitor Native CLI</h4>
+          <span class="text-[10px] text-dashAmber font-bold uppercase block mb-2">Production Android Studio Build</span>
+          <p class="text-xs text-slate-300 leading-relaxed mb-4">
+            Run <code class="text-dashGreen font-mono text-[11px]">npx @capacitor/cli create</code>, add the Android platform, copy `dashit-passenger/` into `www/`, and export an APK directly from Android Studio.
+          </p>
+          <span class="text-xs text-slate-400 font-semibold">For developer packaging</span>
+        </div>
+
+      </div>
+
+      <!-- Quick Test on Real Phone Banner -->
+      <div class="mt-8 bg-dashCard border border-dashBorder rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-xl bg-dashGreen/20 text-dashGreen flex items-center justify-center shrink-0">
+            <i data-lucide="wifi" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h4 class="text-sm font-black text-white">Want to Test on Your Mobile Phone Right Now?</h4>
+            <p class="text-xs text-slate-300">Run a local HTTP server and open your PC's IP address (e.g. <code class="text-dashGreen">http://192.168.x.x:8080</code>) on your mobile browser, then tap <strong>"Add to Home Screen"</strong> for full-screen native app experience!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-dashBorder py-8 bg-dashDark text-center text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-white">DASHIT PRIVATE LIMITED</span>
+        <span>&bull;</span>
+        <span>Registered Corporate Mobility Platform</span>
+      </div>
+      <div class="text-[11px] text-slate-500">
+        Demo Concept & Prototype &bull; Independent Architecture
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+
+    function setSimView(view) {
+      const pWrap = document.getElementById('framePassengerWrap');
+      const cWrap = document.getElementById('frameCaptainWrap');
+      const btnD = document.getElementById('simBtnDual');
+      const btnP = document.getElementById('simBtnPassenger');
+      const btnC = document.getElementById('simBtnCaptain');
+
+      [btnD, btnP, btnC].forEach(b => {
+        b.className = 'px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white';
+      });
+
+      if (view === 'dual') {
+        pWrap.style.display = 'flex';
+        cWrap.style.display = 'flex';
+        btnD.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-dashGreen text-dashNavy';
+      } else if (view === 'passenger') {
+        pWrap.style.display = 'flex';
+        cWrap.style.display = 'none';
+        btnP.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-dashGreen text-dashNavy';
+      } else if (view === 'captain') {
+        pWrap.style.display = 'none';
+        cWrap.style.display = 'flex';
+        btnC.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-dashGreen text-dashNavy';
+      }
+    }
+
+    function scrollToSimulator(type) {
+      document.getElementById('live-simulator').scrollIntoView({ behavior: 'smooth' });
+      setSimView(type);
+    }
+  </script>
+</body>
+</html>

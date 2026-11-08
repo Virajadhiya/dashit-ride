@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>DashIt - Fast, Reliable Bike Taxi, Auto & Cabs</title>
+  
+  <!-- PWA & Mobile Meta -->
+  <meta name="theme-color" content="#76D600">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/png" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dashGreen: '#76D600',
+            dashGreenDark: '#5EB000',
+            dashNavy: '#0A192F',
+            dashMidnight: '#060F1E',
+            dashBlue: '#0047AB',
+            dashCyan: '#00C0FF'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Leaflet Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <!-- Floating Desktop Bezel / Mode Switcher (Visible on desktop) -->
+  <div class="desktop-preview-toolbar hidden md:flex" id="desktopToolbar">
+    <span class="flex items-center gap-2">
+      <span class="w-2.5 h-2.5 rounded-full bg-dashGreen animate-pulse"></span>
+      <span>DashIt Passenger Demo</span>
+    </span>
+    <div class="h-4 w-px bg-white/20"></div>
+    <button onclick="toggleDeviceMode()" id="toggleViewBtn">🖥️ Switch to Fullscreen</button>
+    <a href="../dashit-captain/index.html" class="px-3 py-1.5 rounded-full bg-dashGreen text-dashNavy text-xs font-bold flex items-center gap-1 hover:bg-white transition-all">
+      🚖 Captain App &rarr;
+    </a>
+    <a href="../index.html" class="px-2 text-xs text-slate-300 hover:text-white">
+      Hub Portal
+    </a>
+  </div>
+
+  <!-- Mobile Device Container -->
+  <div class="device-container" id="deviceContainer">
+
+    <!-- Status Bar (Mobile feel) -->
+    <div class="status-bar">
+      <span id="liveTime">09:41</span>
+      <div class="flex items-center gap-1.5 text-xs">
+        <i data-lucide="signal" class="w-3.5 h-3.5"></i>
+        <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+        <i data-lucide="battery-charging" class="w-4 h-4 text-dashGreenDark"></i>
+      </div>
+    </div>
+
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+      <div class="logo-badge">
+        <img src="./logo-transparent.png" alt="DashIt" class="h-6">
+        <div class="city-pill ml-1" onclick="switchCityPrompt()">
+          <span class="dot"></span>
+          <span id="selectedCityName">Bangalore</span>
+          <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <!-- Safety Shield Button -->
+        <button class="btn-icon-blur text-emerald-600" onclick="openSafetyModal()" title="Safety Toolkit">
+          <i data-lucide="shield-check" class="w-5 h-5"></i>
+        </button>
+        <!-- Notifications / Offers -->
+        <button class="btn-icon-blur relative text-slate-700" onclick="openNotificationModal()" title="Alerts">
+          <i data-lucide="bell" class="w-5 h-5"></i>
+          <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Map View -->
+    <div id="map"></div>
+
+    <!-- Floating Map Controls -->
+    <div class="map-floating-controls">
+      <button class="fab-btn sos-btn" onclick="triggerSOSAlert()" title="Emergency SOS">
+        SOS
+      </button>
+      <button class="fab-btn" onclick="recenterMap()" title="Locate Me">
+        <i data-lucide="crosshair" class="w-5 h-5 text-dashBlue"></i>
+      </button>
+    </div>
+
+    <!-- ==================== TAB 1: RIDE (MAIN BOOKING ENGINE) ==================== -->
+    <div id="rideTabContent">
+
+      <!-- Bottom Sheet Drawer: State 0 - Search & Categories -->
+      <div class="bottom-sheet" id="sheetStateSearch">
+        <div class="sheet-handle"></div>
+
+        <!-- Where to Search Box -->
+        <div class="bg-slate-100 rounded-2xl p-3 mb-3 border border-slate-200">
+          <div class="flex items-center gap-3 mb-2 pb-2 border-b border-slate-200/80">
+            <div class="w-3 h-3 rounded-full bg-dashGreen border-2 border-dashNavy shrink-0"></div>
+            <div class="flex-1">
+              <span class="text-[10px] uppercase font-bold text-slate-500 block">Pickup</span>
+              <input type="text" id="pickupInput" value="Indiranagar 100ft Road, Metro Gate 2" class="w-full text-xs font-semibold bg-transparent outline-none text-slate-800">
+            </div>
+            <button class="text-xs text-dashBlue font-semibold" onclick="useCurrentLocation()">GPS</button>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="w-3 h-3 rounded-full bg-red-500 border-2 border-white shrink-0"></div>
+            <div class="flex-1">
+              <span class="text-[10px] uppercase font-bold text-slate-500 block">Drop Location</span>
+              <input type="text" id="dropInput" placeholder="Where are you going?" value="Sony World Junction, Koramangala" class="w-full text-xs font-semibold bg-transparent outline-none text-slate-800">
+            </div>
+            <button class="text-xs bg-dashNavy text-white px-2.5 py-1 rounded-lg font-bold" onclick="showRideComparisonState()">Go</button>
+          </div>
+        </div>
+
+        <!-- Quick Destination Chips -->
+        <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none mb-3">
+          <button onclick="setDestination('MG Road Metro Station', 3.4, 38)" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shrink-0">
+            <i data-lucide="train" class="w-3.5 h-3.5 text-dashBlue"></i>
+            MG Road (3.4 km)
+          </button>
+          <button onclick="setDestination('Koramangala 4th Block, Starbucks', 4.8, 52)" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shrink-0">
+            <i data-lucide="coffee" class="w-3.5 h-3.5 text-amber-600"></i>
+            Koramangala (4.8 km)
+          </button>
+          <button onclick="setDestination('Kempegowda International Airport (BLR)', 38.0, 390)" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shrink-0">
+            <i data-lucide="plane" class="w-3.5 h-3.5 text-indigo-600"></i>
+            Airport (38 km)
+          </button>
+        </div>
+
+        <!-- Service Options Grid -->
+        <div class="grid grid-cols-4 gap-2 mb-2">
+          <div onclick="selectCategory('bike')" class="flex flex-col items-center p-2 rounded-xl bg-dashGreen/10 border border-dashGreen/30 cursor-pointer text-center">
+            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm mb-1 text-xl">🏍️</div>
+            <span class="text-[11px] font-bold text-dashNavy">Bike Taxi</span>
+            <span class="text-[9px] text-dashGreenDark font-bold">Fastest</span>
+          </div>
+          <div onclick="selectCategory('auto')" class="flex flex-col items-center p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 cursor-pointer text-center">
+            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm mb-1 text-xl">🛺</div>
+            <span class="text-[11px] font-bold text-slate-800">Auto</span>
+            <span class="text-[9px] text-slate-500 font-semibold">Metered</span>
+          </div>
+          <div onclick="selectCategory('cab')" class="flex flex-col items-center p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 cursor-pointer text-center">
+            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm mb-1 text-xl">🚗</div>
+            <span class="text-[11px] font-bold text-slate-800">Cabs</span>
+            <span class="text-[9px] text-slate-500 font-semibold">Comfort AC</span>
+          </div>
+          <div onclick="selectCategory('parcel')" class="flex flex-col items-center p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 cursor-pointer text-center">
+            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm mb-1 text-xl">📦</div>
+            <span class="text-[11px] font-bold text-slate-800">Parcel</span>
+            <span class="text-[9px] text-slate-500 font-semibold">Instant Pick</span>
+          </div>
+        </div>
+
+        <button onclick="showRideComparisonState()" class="btn-primary-action mt-2">
+          <span>Find Available Rides</span>
+          <i data-lucide="arrow-right" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Bottom Sheet Drawer: State 1 - Ride Comparison & Options -->
+      <div class="bottom-sheet hidden" id="sheetStateComparison">
+        <div class="sheet-handle"></div>
+        
+        <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+          <div>
+            <h3 class="text-sm font-bold text-dashNavy">Choose Your Ride</h3>
+            <p class="text-[11px] text-slate-500" id="routeSummaryLabel">Route: 4.8 km &bull; Est. 14 mins</p>
+          </div>
+          <button onclick="backToSearchState()" class="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 font-semibold">
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Edit
+          </button>
+        </div>
+
+        <!-- Category Options -->
+        <div class="space-y-2 mb-3 max-h-52 overflow-y-auto pr-1">
+
+          <!-- DashIt Bike Taxi -->
+          <div class="ride-option-card active" id="rideCard-bike" onclick="pickRideOption('bike', 48, 'DashIt Bike')">
+            <div class="flex items-center gap-3">
+              <div class="ride-icon-wrap">🏍️</div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-extrabold text-dashNavy">DashIt Bike</span>
+                  <span class="text-[9px] bg-dashGreen text-dashNavy font-extrabold px-1.5 py-0.5 rounded-md">BEST VALUE</span>
+                </div>
+                <div class="text-[10px] text-slate-500 flex items-center gap-1">
+                  <span>⚡ 2 min away</span> &bull; <span>Sanitized Helmet</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs font-black text-dashNavy">₹48</div>
+              <div class="text-[10px] text-slate-400 line-through">₹65</div>
+            </div>
+          </div>
+
+          <!-- DashIt Auto -->
+          <div class="ride-option-card" id="rideCard-auto" onclick="pickRideOption('auto', 76, 'DashIt Auto')">
+            <div class="flex items-center gap-3">
+              <div class="ride-icon-wrap">🛺</div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-extrabold text-dashNavy">DashIt Auto</span>
+                </div>
+                <div class="text-[10px] text-slate-500 flex items-center gap-1">
+                  <span>🛺 4 min away</span> &bull; <span>Doorstep pickup</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs font-black text-dashNavy">₹76</div>
+              <div class="text-[10px] text-slate-400 line-through">₹95</div>
+            </div>
+          </div>
+
+          <!-- DashIt Cab Mini -->
+          <div class="ride-option-card" id="rideCard-cab" onclick="pickRideOption('cab', 139, 'DashIt Cab Mini')">
+            <div class="flex items-center gap-3">
+              <div class="ride-icon-wrap">🚗</div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-extrabold text-dashNavy">DashIt Cab Mini</span>
+                  <span class="text-[9px] bg-sky-100 text-sky-800 font-bold px-1.5 py-0.5 rounded-md">AC</span>
+                </div>
+                <div class="text-[10px] text-slate-500 flex items-center gap-1">
+                  <span>🚗 5 min away</span> &bull; <span>Pocket-friendly</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs font-black text-dashNavy">₹139</div>
+              <div class="text-[10px] text-slate-400 line-through">₹170</div>
+            </div>
+          </div>
+
+          <!-- DashIt Cab Prime -->
+          <div class="ride-option-card" id="rideCard-prime" onclick="pickRideOption('prime', 189, 'DashIt Cab Prime')">
+            <div class="flex items-center gap-3">
+              <div class="ride-icon-wrap">🚙</div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-extrabold text-dashNavy">DashIt Prime Sedan</span>
+                </div>
+                <div class="text-[10px] text-slate-500 flex items-center gap-1">
+                  <span>🚙 6 min away</span> &bull; <span>Top Rated Captains</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs font-black text-dashNavy">₹189</div>
+              <div class="text-[10px] text-slate-400 line-through">₹230</div>
+            </div>
+          </div>
+
+          <!-- DashIt Parcel -->
+          <div class="ride-option-card" id="rideCard-parcel" onclick="pickRideOption('parcel', 52, 'DashIt Parcel')">
+            <div class="flex items-center gap-3">
+              <div class="ride-icon-wrap">📦</div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-extrabold text-dashNavy">DashIt Parcel Delivery</span>
+                </div>
+                <div class="text-[10px] text-slate-500 flex items-center gap-1">
+                  <span>📦 3 min away</span> &bull; <span>Up to 10kg package</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs font-black text-dashNavy">₹52</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Payment & Coupon Bar -->
+        <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl mb-3 border border-slate-200">
+          <div class="flex items-center gap-2 cursor-pointer" onclick="openPaymentSelector()">
+            <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700">
+              <i data-lucide="wallet" class="w-3.5 h-3.5"></i>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-500 font-bold block uppercase">Payment</span>
+              <span class="text-xs font-bold text-slate-800" id="currentPaymentLabel">DashIt Wallet (₹240)</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 bg-dashGreen/20 px-2 py-1 rounded-lg text-dashNavy text-[10px] font-bold">
+            <i data-lucide="tag" class="w-3 h-3 text-dashGreenDark"></i>
+            <span>DASH20 Applied</span>
+          </div>
+        </div>
+
+        <!-- Book Action CTA -->
+        <button onclick="startCaptainSearchSimulation()" id="bookRideCtaBtn" class="btn-primary-action">
+          <span>Book DashIt Bike &bull; ₹48</span>
+          <i data-lucide="zap" class="w-5 h-5 fill-dashNavy"></i>
+        </button>
+      </div>
+
+      <!-- Bottom Sheet Drawer: State 2 - Searching Nearby Captain -->
+      <div class="bottom-sheet hidden" id="sheetStateSearching">
+        <div class="sheet-handle"></div>
+
+        <div class="text-center py-2">
+          <!-- Animated Radar -->
+          <div class="radar-pulse-box">
+            <div class="radar-wave"></div>
+            <div class="radar-wave"></div>
+            <div class="radar-wave"></div>
+            <div class="w-16 h-16 rounded-full bg-dashNavy flex items-center justify-center text-white text-2xl shadow-xl z-10 border-2 border-dashGreen">
+              🏍️
+            </div>
+          </div>
+
+          <h3 class="text-base font-extrabold text-dashNavy mb-1">Searching Nearby Captains...</h3>
+          <p class="text-xs text-slate-500 mb-4">Contacting top-rated bike captains near your location</p>
+
+          <!-- Search Progress Bar -->
+          <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-4 border border-slate-200">
+            <div class="bg-gradient-to-r from-dashGreen to-dashBlue h-full w-2/3 animate-pulse"></div>
+          </div>
+
+          <div class="flex items-center justify-between bg-slate-50 p-3 rounded-xl mb-4 text-xs font-semibold text-slate-700 border border-slate-200">
+            <span>Ride: <strong id="searchingRideType">DashIt Bike</strong></span>
+            <span>Est. Fare: <strong id="searchingFare">₹48</strong></span>
+          </div>
+
+          <!-- Demo Shortcut Button -->
+          <div class="flex gap-2">
+            <button onclick="cancelSearch()" class="flex-1 py-3 border border-slate-300 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">
+              Cancel
+            </button>
+            <button onclick="simulateCaptainFound()" class="flex-1 py-3 bg-dashNavy text-white rounded-xl text-xs font-bold hover:bg-slate-800 flex items-center justify-center gap-1">
+              <span>⚡ Match Now (Demo)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Sheet Drawer: State 3 - Captain Assigned & En Route -->
+      <div class="bottom-sheet hidden" id="sheetStateAssigned">
+        <div class="sheet-handle"></div>
+
+        <!-- Captain Overview Card -->
+        <div class="captain-card">
+          <div class="flex items-center justify-between mb-3 pb-3 border-b border-white/10">
+            <div class="flex items-center gap-3">
+              <div class="relative">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="Captain" class="w-12 h-12 rounded-full object-cover border-2 border-dashGreen">
+                <span class="absolute -bottom-1 -right-1 bg-dashGreen text-dashNavy text-[9px] font-extrabold px-1 rounded-full">★ 4.9</span>
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-white flex items-center gap-1.5">
+                  <span>Rajesh Kumar</span>
+                  <i data-lucide="check-circle" class="w-3.5 h-3.5 text-dashGreen"></i>
+                </h4>
+                <p class="text-[11px] text-slate-300">Hero Splendor &bull; Black</p>
+                <span class="text-[10px] font-mono tracking-wider bg-white/15 px-2 py-0.5 rounded text-dashGreen font-bold">KA-05-EV-4821</span>
+              </div>
+            </div>
+
+            <!-- OTP Box -->
+            <div class="bg-white/10 p-2 rounded-xl text-center border border-dashGreen/40">
+              <span class="text-[9px] text-slate-300 uppercase block font-semibold">Start OTP</span>
+              <span class="text-lg font-black text-dashGreen tracking-widest" id="startOtpDisplay">5829</span>
+            </div>
+          </div>
+
+          <!-- Status Line & ETA -->
+          <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-dashGreen animate-ping"></span>
+              <span class="font-semibold text-slate-200" id="captainEtaStatus">Captain arriving in 2 mins</span>
+            </div>
+            <span class="text-dashGreen font-bold" id="captainDistanceStatus">0.6 km away</span>
+          </div>
+        </div>
+
+        <!-- Captain Actions -->
+        <div class="grid grid-cols-3 gap-2 mb-3">
+          <button onclick="simulateCallCaptain()" class="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold gap-1">
+            <i data-lucide="phone-call" class="w-4 h-4 text-emerald-600"></i>
+            <span>Call</span>
+          </button>
+          <button onclick="openChatModal()" class="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold gap-1">
+            <i data-lucide="message-square" class="w-4 h-4 text-dashBlue"></i>
+            <span>Chat</span>
+          </button>
+          <button onclick="shareLiveTrip()" class="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold gap-1">
+            <i data-lucide="share-2" class="w-4 h-4 text-purple-600"></i>
+            <span>Share</span>
+          </button>
+        </div>
+
+        <!-- Demo Advance Button -->
+        <button onclick="simulateStartTrip()" class="btn-primary-action">
+          <span>Start Trip Demo &bull; OTP Verified</span>
+          <i data-lucide="navigation" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Bottom Sheet Drawer: State 4 - Ride In Progress -->
+      <div class="bottom-sheet hidden" id="sheetStateInProgress">
+        <div class="sheet-handle"></div>
+
+        <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-xs font-bold text-dashNavy">RIDE IN PROGRESS</span>
+          </div>
+          <span class="text-xs font-mono font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-700">Speed: 42 km/h</span>
+        </div>
+
+        <!-- Live Destination HUD -->
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 mb-3">
+          <div class="flex items-start gap-2.5">
+            <i data-lucide="map-pin" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i>
+            <div>
+              <span class="text-[10px] text-slate-500 uppercase font-bold block">Heading to</span>
+              <p class="text-xs font-bold text-slate-800" id="inProgressDropName">Sony World Junction, Koramangala</p>
+              <div class="flex items-center gap-3 mt-1.5 text-[11px] text-slate-600">
+                <span>⏱️ Remaining: <strong>6 mins</strong></span>
+                <span>📍 Distance: <strong>2.4 km</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Captain Mini Strip -->
+        <div class="flex items-center justify-between p-2.5 rounded-xl bg-dashNavy text-white mb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-dashGreen text-dashNavy font-black flex items-center justify-center text-xs">RK</div>
+            <div class="text-xs">
+              <span class="font-bold block">Rajesh Kumar</span>
+              <span class="text-[10px] text-slate-300">Hero Splendor (KA-05-EV-4821)</span>
+            </div>
+          </div>
+          <button onclick="triggerSOSAlert()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1 shadow">
+            <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> SOS
+          </button>
+        </div>
+
+        <!-- Demo End Trip Button -->
+        <button onclick="simulateCompleteTrip()" class="btn-primary-action">
+          <span>Complete Ride Demo &bull; Arrived</span>
+          <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Bottom Sheet Drawer: State 5 - Ride Completed & Rating -->
+      <div class="bottom-sheet hidden" id="sheetStateCompleted">
+        <div class="sheet-handle"></div>
+
+        <div class="text-center py-2">
+          <div class="w-14 h-14 rounded-full bg-dashGreen/20 text-dashGreenDark mx-auto flex items-center justify-center mb-2">
+            <i data-lucide="check" class="w-8 h-8 stroke-[3]"></i>
+          </div>
+          <h3 class="text-lg font-extrabold text-dashNavy">You have arrived safely!</h3>
+          <p class="text-xs text-slate-500 mb-3">Hope you had a smooth DashIt ride</p>
+
+          <!-- Fare Breakdown Box -->
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 mb-4 text-left">
+            <div class="flex justify-between items-center text-xs mb-1.5">
+              <span class="text-slate-600">Trip Distance & Time</span>
+              <span class="font-bold text-slate-800">4.8 km &bull; 13 mins</span>
+            </div>
+            <div class="flex justify-between items-center text-xs mb-1.5">
+              <span class="text-slate-600">Base Fare & Distance</span>
+              <span class="font-bold text-slate-800">₹68.00</span>
+            </div>
+            <div class="flex justify-between items-center text-xs mb-1.5 text-dashGreenDark">
+              <span>Promo Discount (DASH20)</span>
+              <span class="font-bold">-₹20.00</span>
+            </div>
+            <div class="border-t border-slate-200 pt-2 flex justify-between items-center font-extrabold text-sm text-dashNavy">
+              <span>Total Paid (DashIt Wallet)</span>
+              <span class="text-dashGreenDark text-base">₹48.00</span>
+            </div>
+          </div>
+
+          <!-- Star Rating -->
+          <div class="mb-4">
+            <span class="text-xs font-bold text-slate-700 block mb-2">Rate Rajesh Kumar</span>
+            <div class="flex justify-center gap-2" id="starRatingGroup">
+              <button onclick="rateCaptain(1)" class="star-btn text-2xl text-amber-400">★</button>
+              <button onclick="rateCaptain(2)" class="star-btn text-2xl text-amber-400">★</button>
+              <button onclick="rateCaptain(3)" class="star-btn text-2xl text-amber-400">★</button>
+              <button onclick="rateCaptain(4)" class="star-btn text-2xl text-amber-400">★</button>
+              <button onclick="rateCaptain(5)" class="star-btn text-2xl text-amber-400">★</button>
+            </div>
+            <div class="flex flex-wrap justify-center gap-1.5 mt-2">
+              <span class="text-[10px] bg-slate-100 hover:bg-dashGreen/20 px-2 py-1 rounded-full cursor-pointer font-semibold text-slate-700">Clean Helmet</span>
+              <span class="text-[10px] bg-slate-100 hover:bg-dashGreen/20 px-2 py-1 rounded-full cursor-pointer font-semibold text-slate-700">Safe Driving</span>
+              <span class="text-[10px] bg-slate-100 hover:bg-dashGreen/20 px-2 py-1 rounded-full cursor-pointer font-semibold text-slate-700">Polite & Fast</span>
+            </div>
+          </div>
+
+          <!-- Tip Captain Chips -->
+          <div class="flex items-center justify-between mb-4 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+            <span class="text-xs font-bold text-slate-700">Add a tip for captain:</span>
+            <div class="flex gap-1.5">
+              <button onclick="addTip(10)" class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 hover:border-dashGreen">+₹10</button>
+              <button onclick="addTip(20)" class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 hover:border-dashGreen">+₹20</button>
+              <button onclick="addTip(50)" class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 hover:border-dashGreen">+₹50</button>
+            </div>
+          </div>
+
+          <button onclick="resetToInitialMapState()" class="btn-primary-action">
+            <span>Done & Book Another Ride</span>
+            <i data-lucide="check" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== TAB 2: ACTIVITY / RIDE HISTORY ==================== -->
+    <div class="full-screen-tab" id="activityTabContent">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-black text-dashNavy">Your Ride History</h2>
+        <span class="text-xs bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full font-bold">14 Rides</span>
+      </div>
+
+      <div class="space-y-3">
+        <!-- History Item 1 -->
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="flex justify-between items-center mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🏍️</span>
+              <div>
+                <h4 class="text-xs font-bold text-dashNavy">DashIt Bike Taxi</h4>
+                <span class="text-[10px] text-slate-500">Today, 2:30 PM &bull; 4.8 km</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-xs font-extrabold text-dashNavy">₹48</span>
+              <span class="block text-[9px] text-emerald-600 font-bold">COMPLETED</span>
+            </div>
+          </div>
+          <div class="border-t border-slate-100 pt-2 text-[11px] text-slate-600 space-y-1 mb-2">
+            <div class="flex items-center gap-1.5 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-dashGreen"></span>
+              <span>Indiranagar 100ft Road</span>
+            </div>
+            <div class="flex items-center gap-1.5 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+              <span>Sony World Signal, Koramangala</span>
+            </div>
+          </div>
+          <div class="flex justify-between items-center pt-1 border-t border-slate-100">
+            <span class="text-[10px] text-slate-400">Captain: Rajesh K. (★ 5.0)</span>
+            <button onclick="rebookRide('bike', 'Indiranagar 100ft Road', 'Sony World Signal')" class="text-xs text-dashBlue font-bold hover:underline">Re-book Ride</button>
+          </div>
+        </div>
+
+        <!-- History Item 2 -->
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="flex justify-between items-center mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🛺</span>
+              <div>
+                <h4 class="text-xs font-bold text-dashNavy">DashIt Auto</h4>
+                <span class="text-[10px] text-slate-500">Yesterday, 7:15 PM &bull; 6.2 km</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-xs font-extrabold text-dashNavy">₹82</span>
+              <span class="block text-[9px] text-emerald-600 font-bold">COMPLETED</span>
+            </div>
+          </div>
+          <div class="border-t border-slate-100 pt-2 text-[11px] text-slate-600 space-y-1 mb-2">
+            <div class="flex items-center gap-1.5 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-dashGreen"></span>
+              <span>MG Road Metro</span>
+            </div>
+            <div class="flex items-center gap-1.5 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+              <span>HSR Layout Sector 1</span>
+            </div>
+          </div>
+          <div class="flex justify-between items-center pt-1 border-t border-slate-100">
+            <span class="text-[10px] text-slate-400">Captain: Syed Noor</span>
+            <button onclick="rebookRide('auto', 'MG Road Metro', 'HSR Layout Sector 1')" class="text-xs text-dashBlue font-bold hover:underline">Re-book Ride</button>
+          </div>
+        </div>
+
+        <!-- History Item 3 -->
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="flex justify-between items-center mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🚗</span>
+              <div>
+                <h4 class="text-xs font-bold text-dashNavy">DashIt Cab Mini</h4>
+                <span class="text-[10px] text-slate-500">3 Nov, 10:45 AM &bull; 11.5 km</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-xs font-extrabold text-dashNavy">₹210</span>
+              <span class="block text-[9px] text-emerald-600 font-bold">COMPLETED</span>
+            </div>
+          </div>
+          <div class="border-t border-slate-100 pt-2 text-[11px] text-slate-600 space-y-1 mb-2">
+            <div class="flex items-center gap-1.5 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-dashGreen"></span>
+              <span>Whitefield ITPL</span>
+            </div>
+            <div class="flex items-center gap-1.5 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+              <span>Bellandur EcoSpace</span>
+            </div>
+          </div>
+          <div class="flex justify-between items-center pt-1 border-t border-slate-100">
+            <span class="text-[10px] text-slate-400">Captain: Manjunath B.</span>
+            <button onclick="rebookRide('cab', 'Whitefield ITPL', 'Bellandur EcoSpace')" class="text-xs text-dashBlue font-bold hover:underline">Re-book Ride</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 3: WALLET & OFFERS ==================== -->
+    <div class="full-screen-tab" id="walletTabContent">
+      <h2 class="text-lg font-black text-dashNavy mb-4">DashIt Wallet & Pay</h2>
+
+      <!-- Wallet Card -->
+      <div class="bg-gradient-to-br from-dashNavy to-slate-900 text-white rounded-3xl p-5 mb-4 shadow-xl border border-white/10 relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-36 h-36 bg-dashGreen/20 rounded-full blur-2xl"></div>
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <span class="text-xs font-semibold text-slate-300">Total Balance</span>
+            <div class="text-3xl font-black text-white mt-1 flex items-baseline gap-1">
+              <span>₹240</span><span class="text-sm font-semibold text-dashGreen">.00</span>
+            </div>
+          </div>
+          <span class="px-2.5 py-1 bg-dashGreen/20 text-dashGreen rounded-full text-[10px] font-extrabold uppercase tracking-wider">Active</span>
+        </div>
+
+        <div class="flex gap-2">
+          <button onclick="addWalletFunds(100)" class="flex-1 py-2 bg-dashGreen text-dashNavy rounded-xl text-xs font-extrabold hover:bg-white transition-all">+ ₹100</button>
+          <button onclick="addWalletFunds(200)" class="flex-1 py-2 bg-white/15 text-white rounded-xl text-xs font-extrabold hover:bg-white/25 transition-all">+ ₹200</button>
+          <button onclick="addWalletFunds(500)" class="flex-1 py-2 bg-white/15 text-white rounded-xl text-xs font-extrabold hover:bg-white/25 transition-all">+ ₹500</button>
+        </div>
+      </div>
+
+      <!-- DashIt PayLater banner -->
+      <div class="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 p-3.5 rounded-2xl mb-4 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded font-black uppercase">Approved</span>
+          <h4 class="text-xs font-black text-slate-800 mt-1">DashIt PayLater &bull; ₹1,500 Limit</h4>
+          <p class="text-[10px] text-slate-500">Ride now, pay automatically at month end</p>
+        </div>
+        <button class="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-xl font-bold">Manage</button>
+      </div>
+
+      <!-- Referral Banner -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 mb-4 shadow-sm">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-xl bg-dashGreen/20 text-dashNavy flex items-center justify-center text-xl">🎁</div>
+          <div>
+            <h4 class="text-xs font-black text-slate-800">Refer Friends & Earn ₹50</h4>
+            <p class="text-[11px] text-slate-500">Your friend gets ₹50 off their first 2 rides!</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 bg-slate-100 p-2 rounded-xl">
+          <span class="font-mono text-xs font-bold text-dashNavy flex-1 text-center">DASHIT7789</span>
+          <button onclick="copyReferralCode()" class="bg-dashNavy text-white px-3 py-1.5 rounded-lg text-xs font-bold">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 4: PROFILE & ACCOUNT ==================== -->
+    <div class="full-screen-tab" id="accountTabContent">
+      <div class="flex items-center gap-3.5 mb-5 p-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80" alt="Profile" class="w-14 h-14 rounded-full object-cover border-2 border-dashGreen">
+        <div class="flex-1">
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm font-black text-dashNavy">Aditya Sharma</h3>
+            <span class="text-[10px] bg-dashGreen/20 text-dashNavy font-extrabold px-1.5 py-0.5 rounded">★ 4.95</span>
+          </div>
+          <p class="text-xs text-slate-500">+91 98765 43210</p>
+          <span class="text-[10px] text-emerald-600 font-bold">Verified DashIt Passenger</span>
+        </div>
+      </div>
+
+      <!-- Menu Items -->
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden divide-y divide-slate-100 mb-4 shadow-sm">
+        <div onclick="openSavedPlacesModal()" class="flex items-center justify-between p-3.5 hover:bg-slate-50 cursor-pointer">
+          <div class="flex items-center gap-3 text-xs font-bold text-slate-800">
+            <i data-lucide="bookmark" class="w-4 h-4 text-dashBlue"></i>
+            <span>Saved Places (Home, Office)</span>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+        </div>
+
+        <div onclick="openSafetyModal()" class="flex items-center justify-between p-3.5 hover:bg-slate-50 cursor-pointer">
+          <div class="flex items-center gap-3 text-xs font-bold text-slate-800">
+            <i data-lucide="shield" class="w-4 h-4 text-emerald-600"></i>
+            <span>Safety Toolkit & Emergency SOS</span>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+        </div>
+
+        <div onclick="alert('24/7 DashIt Passenger Support: Call 1800-DASHIT or chat in-app.')" class="flex items-center justify-between p-3.5 hover:bg-slate-50 cursor-pointer">
+          <div class="flex items-center gap-3 text-xs font-bold text-slate-800">
+            <i data-lucide="headphones" class="w-4 h-4 text-purple-600"></i>
+            <span>24/7 Help & Support</span>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+        </div>
+
+        <div onclick="alert('Company: DashIt Private Limited\nApp Version: 2.4.0 (Demo Build)\nEngine: DashIt Real-Time Mobility Cloud')" class="flex items-center justify-between p-3.5 hover:bg-slate-50 cursor-pointer">
+          <div class="flex items-center gap-3 text-xs font-bold text-slate-800">
+            <i data-lucide="info" class="w-4 h-4 text-slate-500"></i>
+            <span>About DashIt Private Limited</span>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+        </div>
+      </div>
+
+      <!-- App Info -->
+      <div class="text-center text-slate-400 text-[11px] pt-2">
+        <p class="font-bold text-slate-600">DASHIT PRIVATE LIMITED</p>
+        <p>Demo Passenger Web App &bull; APK-Ready</p>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <button class="nav-tab-btn active" id="tabBtnRide" onclick="switchMainTab('ride')">
+        <i data-lucide="map-pin" class="w-5 h-5"></i>
+        <span>Ride</span>
+      </button>
+      <button class="nav-tab-btn" id="tabBtnActivity" onclick="switchMainTab('activity')">
+        <i data-lucide="clock" class="w-5 h-5"></i>
+        <span>Activity</span>
+      </button>
+      <button class="nav-tab-btn" id="tabBtnWallet" onclick="switchMainTab('wallet')">
+        <i data-lucide="wallet" class="w-5 h-5"></i>
+        <span>Wallet</span>
+      </button>
+      <button class="nav-tab-btn" id="tabBtnAccount" onclick="switchMainTab('account')">
+        <i data-lucide="user" class="w-5 h-5"></i>
+        <span>Account</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- Chat with Captain Modal Simulation -->
+  <div id="chatModal" class="fixed inset-0 bg-black/60 z-[1100] hidden flex items-end justify-center p-3">
+    <div class="bg-white w-full max-w-md rounded-3xl p-4 shadow-2xl">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-dashNavy text-dashGreen font-bold flex items-center justify-center text-xs">RK</div>
+          <div>
+            <h4 class="text-xs font-bold text-dashNavy">Chat with Rajesh Kumar</h4>
+            <span class="text-[10px] text-emerald-600 font-semibold">Online &bull; Arriving soon</span>
+          </div>
+        </div>
+        <button onclick="closeChatModal()" class="text-slate-400 hover:text-slate-700 text-lg">&times;</button>
+      </div>
+      <div class="py-4 space-y-2 max-h-48 overflow-y-auto text-xs" id="chatMessages">
+        <div class="bg-slate-100 text-slate-700 p-2.5 rounded-2xl max-w-[80%] rounded-tl-none">
+          Hi! I am on my way to your pickup location. Please be near Metro Gate 2.
+        </div>
+        <div class="bg-dashNavy text-white p-2.5 rounded-2xl max-w-[80%] ml-auto rounded-tr-none">
+          Sure, I am waiting right next to the bakery!
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <input type="text" id="chatInput" placeholder="Type a message..." class="flex-1 bg-slate-100 rounded-xl px-3 py-2 text-xs outline-none">
+        <button onclick="sendChatMessage()" class="bg-dashGreen text-dashNavy px-3 py-2 rounded-xl text-xs font-bold">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Safety Shield Modal -->
+  <div id="safetyModal" class="fixed inset-0 bg-black/60 z-[1100] hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl text-center">
+      <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center mb-3">
+        <i data-lucide="shield-check" class="w-7 h-7"></i>
+      </div>
+      <h3 class="text-base font-black text-dashNavy mb-1">DashIt Safety Shield</h3>
+      <p class="text-xs text-slate-500 mb-4">Your trip is protected with 24/7 GPS ride monitoring and insured by DashIt.</p>
+      <div class="space-y-2 text-left text-xs mb-4">
+        <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-2">
+          <i data-lucide="phone" class="w-4 h-4 text-red-500"></i>
+          <span class="font-bold">112 Police Emergency Speed Dial</span>
+        </div>
+        <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-2">
+          <i data-lucide="mic" class="w-4 h-4 text-dashBlue"></i>
+          <span class="font-bold">Audio Ride Check (Encrypted)</span>
+        </div>
+        <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-2">
+          <i data-lucide="users" class="w-4 h-4 text-purple-600"></i>
+          <span class="font-bold">Share Live Tracking with Family</span>
+        </div>
+      </div>
+      <button onclick="closeSafetyModal()" class="w-full py-2.5 bg-dashNavy text-white rounded-xl text-xs font-bold">Close Safety Toolkit</button>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed top-12 left-1/2 -translate-x-1/2 bg-dashNavy text-white px-4 py-2.5 rounded-full text-xs font-bold shadow-2xl z-[1200] opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-2">
+    <i data-lucide="bell" class="w-4 h-4 text-dashGreen"></i>
+    <span id="toastMsg">Notification</span>
+  </div>
+
+  <!-- Application Logic -->
+  <script src="./app.js"></script>
+</body>
+</html>
