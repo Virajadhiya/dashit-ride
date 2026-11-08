@@ -96,19 +96,12 @@ function initCaptainMap() {
     attributionControl: false
   }).setView([lat, lng], 14);
 
-  // Modern CartoDB Voyager tiles (with CSS dark tone filter) & OSM fallback
-  const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  // Clean OpenStreetMap tiles (100% Free, NO API key, NO watermark) with dark cockpit filter
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
-    subdomains: 'abcd',
-    className: 'dark-map-tiles'
+    className: 'dark-map-tiles',
+    attribution: '&copy; OpenStreetMap contributors'
   }).addTo(captainMap);
-
-  tileLayer.on('tileerror', function() {
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      className: 'dark-map-tiles'
-    }).addTo(captainMap);
-  });
 
   // Ensure map tiles calculate correct container dimensions on deployment
   setTimeout(() => { if (captainMap) captainMap.invalidateSize(); }, 150);
@@ -179,7 +172,10 @@ function toggleDutyOnline() {
     track.classList.add('online');
     label.textContent = 'ONLINE';
     label.className = 'text-xs font-bold text-dashGreen';
-    overlay.classList.add('hidden');
+    if (overlay) {
+      overlay.classList.add('hidden');
+      overlay.style.setProperty('display', 'none', 'important');
+    }
     heading.innerHTML = `
       <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
       <span class="text-white">ONLINE & ACCEPTING</span>
@@ -189,7 +185,10 @@ function toggleDutyOnline() {
     track.classList.remove('online');
     label.textContent = 'OFFLINE';
     label.className = 'text-xs font-bold text-slate-400';
-    overlay.classList.remove('hidden');
+    if (overlay) {
+      overlay.classList.remove('hidden');
+      overlay.style.setProperty('display', 'flex', 'important');
+    }
     heading.innerHTML = `
       <span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
       <span class="text-slate-400">OFFLINE</span>
@@ -241,7 +240,10 @@ function triggerSimulatedRideRequest() {
   }
 
   const modal = document.getElementById('incomingTripModal');
-  modal.classList.remove('hidden');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.style.setProperty('display', 'flex', 'important');
+  }
 
   startIncomingRideSiren();
 
@@ -261,7 +263,11 @@ function triggerSimulatedRideRequest() {
 function declineTripRequest() {
   stopIncomingRideSiren();
   if (countdownTimerInterval) clearInterval(countdownTimerInterval);
-  document.getElementById('incomingTripModal').classList.add('hidden');
+  const modal = document.getElementById('incomingTripModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.setProperty('display', 'none', 'important');
+  }
   playCaptainTone(320);
   showCaptainToast('Ride declined');
 }
@@ -269,17 +275,32 @@ function declineTripRequest() {
 function acceptTripRequest() {
   stopIncomingRideSiren();
   if (countdownTimerInterval) clearInterval(countdownTimerInterval);
-  document.getElementById('incomingTripModal').classList.add('hidden');
+  const modal = document.getElementById('incomingTripModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.setProperty('display', 'none', 'important');
+  }
 
   playCaptainTone(880, 'sine', 0.3, 0.35);
   showCaptainToast('🎉 Ride Accepted! Head to pickup.');
 
   // Show active trip HUD Step 1
-  document.getElementById('captainTripHud').classList.remove('hidden');
-  document.getElementById('hudPickupState').classList.remove('hidden');
-  document.getElementById('hudOtpState').classList.add('hidden');
-  document.getElementById('hudDrivingState').classList.add('hidden');
-  document.getElementById('hudCompleteState').classList.add('hidden');
+  const hud = document.getElementById('captainTripHud');
+  const pickup = document.getElementById('hudPickupState');
+  if (hud) {
+    hud.classList.remove('hidden');
+    hud.style.setProperty('display', 'block', 'important');
+  }
+  if (pickup) {
+    pickup.classList.remove('hidden');
+    pickup.style.setProperty('display', 'block', 'important');
+  }
+  const otpState = document.getElementById('hudOtpState');
+  const drivingState = document.getElementById('hudDrivingState');
+  const completeState = document.getElementById('hudCompleteState');
+  if (otpState) { otpState.classList.add('hidden'); otpState.style.setProperty('display', 'none', 'important'); }
+  if (drivingState) { drivingState.classList.add('hidden'); drivingState.style.setProperty('display', 'none', 'important'); }
+  if (completeState) { completeState.classList.add('hidden'); completeState.style.setProperty('display', 'none', 'important'); }
 }
 
 // Trip Step 1: Arrived at Pickup
@@ -287,8 +308,10 @@ function captainArrivedAtPickup() {
   playCaptainTone(600);
   showCaptainToast('📍 Arrived at pickup location.');
 
-  document.getElementById('hudPickupState').classList.add('hidden');
-  document.getElementById('hudOtpState').classList.remove('hidden');
+  const p = document.getElementById('hudPickupState');
+  const o = document.getElementById('hudOtpState');
+  if (p) { p.classList.add('hidden'); p.style.setProperty('display', 'none', 'important'); }
+  if (o) { o.classList.remove('hidden'); o.style.setProperty('display', 'block', 'important'); }
 }
 
 // Trip Step 2: Verify OTP & Start Ride
@@ -302,8 +325,10 @@ function verifyOtpAndStartRide() {
   playCaptainTone(750, 'triangle', 0.25);
   showCaptainToast('✅ OTP 5829 Verified! Trip Started.');
 
-  document.getElementById('hudOtpState').classList.add('hidden');
-  document.getElementById('hudDrivingState').classList.remove('hidden');
+  const o = document.getElementById('hudOtpState');
+  const d = document.getElementById('hudDrivingState');
+  if (o) { o.classList.add('hidden'); o.style.setProperty('display', 'none', 'important'); }
+  if (d) { d.classList.remove('hidden'); d.style.setProperty('display', 'block', 'important'); }
 }
 
 // Trip Step 3: Complete Trip
@@ -312,14 +337,20 @@ function captainCompleteTrip() {
   todayEarnings += 85;
   document.getElementById('topBarEarningsVal').textContent = `₹${todayEarnings}`;
 
-  document.getElementById('hudDrivingState').classList.add('hidden');
-  document.getElementById('hudCompleteState').classList.remove('hidden');
+  const d = document.getElementById('hudDrivingState');
+  const c = document.getElementById('hudCompleteState');
+  if (d) { d.classList.add('hidden'); d.style.setProperty('display', 'none', 'important'); }
+  if (c) { c.classList.remove('hidden'); c.style.setProperty('display', 'block', 'important'); }
 }
 
 // Trip Step 4: Ready for Next Ride
 function captainReadyForNextRide() {
   playCaptainTone(500);
-  document.getElementById('captainTripHud').classList.add('hidden');
+  const hud = document.getElementById('captainTripHud');
+  if (hud) {
+    hud.classList.add('hidden');
+    hud.style.setProperty('display', 'none', 'important');
+  }
   showCaptainToast('🟢 Ready for next ride request.');
 }
 

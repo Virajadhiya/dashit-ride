@@ -95,18 +95,11 @@ function initLeafletMap() {
     attributionControl: false
   }).setView([defaultLat, defaultLng], 14);
 
-  // Modern Clean CartoDB Voyager Tiles with OSM Fallback
-  const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  // Clean OpenStreetMap Tiles (100% Free, NO API key required, NO watermark)
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
-    subdomains: 'abcd'
+    attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
-
-  tileLayer.on('tileerror', function(error) {
-    console.warn('Carto tile error, falling back to OSM:', error);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
-    }).addTo(map);
-  });
 
   // Ensure map tiles calculate correct container dimensions on deployment
   setTimeout(() => { if (map) map.invalidateSize(); }, 150);
@@ -485,10 +478,19 @@ function copyReferralCode() {
 // Modal Handlers
 function openChatModal() {
   playTone(500);
-  document.getElementById('chatModal').classList.remove('hidden');
+  const modal = document.getElementById('chatModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.style.setProperty('display', 'flex', 'important');
+  }
 }
 function closeChatModal() {
-  document.getElementById('chatModal').classList.add('hidden');
+  playTone(350);
+  const modal = document.getElementById('chatModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.setProperty('display', 'none', 'important');
+  }
 }
 function sendChatMessage() {
   const input = document.getElementById('chatInput');
@@ -533,10 +535,19 @@ function shareLiveTrip() {
 
 function openSafetyModal() {
   playTone(450);
-  document.getElementById('safetyModal').classList.remove('hidden');
+  const modal = document.getElementById('safetyModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.style.setProperty('display', 'flex', 'important');
+  }
 }
 function closeSafetyModal() {
-  document.getElementById('safetyModal').classList.add('hidden');
+  playTone(350);
+  const modal = document.getElementById('safetyModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.setProperty('display', 'none', 'important');
+  }
 }
 function triggerSOSAlert() {
   playTone(200, 'sawtooth', 0.5, 0.4);

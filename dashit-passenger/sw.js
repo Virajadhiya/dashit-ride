@@ -1,5 +1,5 @@
 // DashIt Passenger Service Worker (Network-first strategy to guarantee latest deployment UI)
-const CACHE_NAME = 'dashit-passenger-v2';
+const CACHE_NAME = 'dashit-passenger-v3';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

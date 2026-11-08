@@ -1,5 +1,5 @@
 // DashIt Captain Service Worker (Network-first strategy)
-const CACHE_NAME = 'dashit-captain-v2';
+const CACHE_NAME = 'dashit-captain-v3';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
